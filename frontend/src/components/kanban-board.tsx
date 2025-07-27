@@ -1,7 +1,9 @@
-"use client"
+"use client";
 
-import { useState, useMemo } from "react"
-import { Search, Bell, Plus, FileText, ChevronDown } from "lucide-react"
+import { useState, useMemo, useEffect } from "react";
+import { Search, Bell, Plus, ChevronDown } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createTaskApi, deleteTaskApi, updateTaskApi } from "@/api/tasks";
 import {
   DndContext,
   type DragEndEvent,
@@ -12,240 +14,207 @@ import {
   useSensor,
   useSensors,
   closestCenter,
-} from "@dnd-kit/core"
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
-import { createPortal } from "react-dom"
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { createPortal } from "react-dom";
+import { Input } from "./ui/input";
+import { Button } from "./ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
+import KanbanColumn from "./kanban-column";
+import TaskCard from "./task-card";
+import CreateTaskModal from "./create-task-modal";
+import EditTaskModal from "./edit-task-modal";
+import DeleteTaskModal from "./delete-task-modal";
+import { Task, Column, Filters, UpdateTaskPayload } from "@/types/index";
+import { useQuery } from "@tanstack/react-query";
+import { getTasks } from "@/api/tasks";
+import { toast } from "sonner";
 
-import { Input } from "./ui/input"
-import { Button } from "./ui/button"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
-import KanbanColumn from "./kanban-column"
-import TaskCard from "./task-card"
-import CreateTaskModal from "./create-task-modal"
-import EditTaskModal from "./edit-task-modal"
-import DeleteTaskModal from "./delete-task-modal"
-import { Task, Column, Filters } from "@/types/index"
-
-
+type UpdateTaskInput = {
+  title: string;
+  description?: string;
+  status: "todo" | "in_progress" | "done";
+  priority: "low" | "medium" | "high";
+  assigneeId: string;
+  due_date?: string;
+};
 
 const KanbanBoard = () => {
-  const [tasks, setTasks] = useState<Task[]>(
-    [
-    {
-      id: "1",
-      title: "Set up authentication system",
-      description: "Implement user login and registration functionality",
-      status: "todo",
-      priority: "medium",
-      assigneeId: "user-1",
-      dueDate: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString(),
-    },
-    {
-      id: "2",
-      title: "Design landing page mockup",
-      description: "Create wireframes and visual design for the new landing page",
-      status: "todo",
-      priority: "high",
-      assigneeId: "user-2",
-      dueDate: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString(),
-    },
-    {
-      id: "3",
-      title: "Implement drag and drop",
-      description: "Add drag and drop functionality to kanban board",
-      status: "in_progress",
-      priority: "medium",
-      assigneeId: "user-3",
-      dueDate: new Date(new Date().setDate(new Date().getDate() + 5)).toISOString(),
-    },
-    {
-      id: "4",
-      title: "API integration",
-      description: "Connect frontend with backend API endpoints",
-      status: "in_progress",
-      priority: "high",
-      assigneeId: "user-1",
-      dueDate: new Date(new Date().setDate(new Date().getDate() + 3)).toISOString(),
-    },
-    {
-      id: "5",
-      title: "User testing",
-      description: "Conduct user testing sessions and gather feedback",
-      status: "done",
-      priority: "medium",
-      assigneeId: "user-2",
-      dueDate: new Date(new Date().setDate(new Date().getDate() + 10)).toISOString(),
-    },
-    {
-      id: "6",
-      title: "Bug fixes",
-      description: "Address reported issues and bugs",
-      status: "done",
-      priority: "high",
-      assigneeId: "user-3",
-      dueDate: new Date(new Date().setDate(new Date().getDate() + 2)).toISOString(),
-    },
-    {
-      id: "7",
-      title: "Code review process",
-      description: "Establish code review guidelines and process",
-      status: "todo",
-      priority: "low",
-      assigneeId: "user-1",
-      dueDate: new Date(new Date().setDate(new Date().getDate() + 8)).toISOString(),
-    },
-    {
-      id: "8",
-      title: "Documentation",
-      description: "Write technical documentation and API references",
-      status: "in_progress",
-      priority: "low",
-      assigneeId: "user-2",
-      dueDate: new Date(new Date().setDate(new Date().getDate() + 6)).toISOString(),
-    },
-    {
-      id: "9",
-      title: "Implement drag and drop",
-      description: "Add drag and drop functionality to kanban board",
-      status: "in_progress",
-      priority: "medium",
-      assigneeId: "user-3",
-      dueDate: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString(),
-    },
-    {
-      id: "10",
-      title: "Build task management API",
-      description: "Create REST endpoints for CRUD operations on tasks",
-      status: "in_progress",
-      priority: "high",
-      assigneeId: "user-4",
-      dueDate: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString(),
-    },
-    {
-      id: "11",
-      title: "Deploy to production",
-      description: "Set up production environment and deploy application",
-      status: "done",
-      priority: "medium",
-      assigneeId: "user-5",
-      dueDate: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString(),
-    },
-    {
-      id: "12",
-      title: "Write project documentation",
-      description: "Create comprehensive documentation for the project",
-      status: "done",
-      priority: "low",
-      assigneeId: "user-6",
-      dueDate: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString(),
-    },
-    {
-      id: "13",
-      title: "Code review process",
-      description: "Establish code review guidelines and process",
-      status: "todo",
-      priority: "low",
-      assigneeId: "user-1",
-      dueDate: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString(),
-    },
-    {
-      id: "14",
-      title: "Database optimization",
-      description: "Optimize database queries for better performance",
-      status: "in_progress",
-      priority: "high",
-      assigneeId: "user-2",
-      dueDate: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString(),
-    },
-  ]
-)
+  const queryClient = useQueryClient();
+  const [tasks, setTasks] = useState<Task[]>([]);
 
-  const [activeTask, setActiveTask] = useState<Task | null>(null)
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  // GET tasks list
+  const {
+    data: tasksList,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["tasks"], // can include filters like ['tasks', { status: 'todo' }]
+    queryFn: () => getTasks(), // you can pass filters here
+  });
+
+  // CREATE new task
+  const { mutate: createTask, isPending: isCreatingTask } = useMutation({
+    mutationFn: createTaskApi,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      toast.success("Task created successfully");
+    },
+    onError: (error) => {
+      toast.error("Failed to create task" + (error as Error).message);
+    },
+  });
+
+  useEffect(() => {
+    if (tasksList) {
+      console.log("tasks list fetched");
+      setTasks(tasksList);
+    }
+  }, [tasksList]);
+
+  const [activeTask, setActiveTask] = useState<Task | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [filters, setFilters] = useState<Filters>({
     priority: "all-priorities",
     assignee: "all-assignees",
     status: "all-status",
     search: "",
-  })
+  });
 
-  const [editingTask, setEditingTask] = useState<Task | null>(null)
-  const [deletingTask, setDeletingTask] = useState<Task | null>(null)
+  // DELETE task mutation
+  const { mutate: deleteTask } = useMutation({
+    mutationFn: deleteTaskApi,
+    onSuccess: () => {
+      toast.success("Task deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      setDeletingTask(null);
+    },
+    onError: (error: Error) => {
+      toast.error("Failed to delete task: " + error.message);
+    },
+  });
+
+  // Update task mutation
+  const updateTaskMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateTaskPayload }) =>
+      updateTaskApi(id, data),
+    onSuccess: () => {
+      toast.success("Task updated successfully");
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      setEditingTask(null);
+    },
+    onError: (error: Error) => {
+      toast.error("Failed to update task: " + error.message);
+    },
+  });
+
+  // Function to pass down to EditTaskModal
+  const handleUpdateTask = (updatedTaskData: UpdateTaskInput) => {
+    if (!editingTask) return;
+    updateTaskMutation.mutate({ id: editingTask.id, data: updatedTaskData });
+  };
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [deletingTask, setDeletingTask] = useState<Task | null>(null);
 
   const columns: Column[] = [
     { id: "todo", title: "To Do" },
     { id: "in_progress", title: "In Progress" },
     { id: "done", title: "Done" },
-  ]
+  ];
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 8 },
-    }),
-  )
+    })
+  );
 
   // Get unique assignees and priorities from tasks
   const uniqueAssignees = useMemo(() => {
-    const assignees = [...new Set(tasks.map((task) => task.assigneeId))].sort()
-    return assignees
-  }, [tasks])
+    const assignees = [
+      ...new Set(tasks.map((task) => task.assignee?.full_name)),
+    ].sort();
+    return assignees;
+  }, [tasks]);
 
   const uniquePriorities = useMemo(() => {
-    const priorities = [...new Set(tasks.map((task) => task.priority))]
-    return priorities.sort()
-  }, [tasks])
+    const priorities = [...new Set(tasks.map((task) => task.priority))];
+    return priorities.sort();
+  }, [tasks]);
 
   // Filter tasks based on current filters
   const filteredTasks = useMemo(() => {
     return tasks.filter((task) => {
       // Search filter
       if (filters.search) {
-        const searchLower = filters.search.toLowerCase()
+        const searchLower = filters.search.toLowerCase();
         const matchesSearch =
           task.title.toLowerCase().includes(searchLower) ||
-          (task.description?.toLowerCase() || '').includes(searchLower) ||
-          task.assigneeId.toLowerCase().includes(searchLower)
-        if (!matchesSearch) return false
+          (task.description?.toLowerCase() || "").includes(searchLower) ||
+          task.assigneeId.toLowerCase().includes(searchLower);
+        if (!matchesSearch) return false;
       }
 
       // Priority filter
-      if (filters.priority !== "all-priorities" && task.priority !== filters.priority) {
-        return false
+      if (
+        filters.priority !== "all-priorities" &&
+        task.priority !== filters.priority
+      ) {
+        return false;
       }
 
       // Assignee filter
-      if (filters.assignee !== "all-assignees" && task.assigneeId !== filters.assignee) {
-        return false
+      if (
+        filters.assignee !== "all-assignees" &&
+        task.assignee?.full_name !== filters.assignee
+      ) {
+        return false;
       }
 
       // Status filter
       if (filters.status !== "all-status" && task.status !== filters.status) {
-        return false
+        return false;
       }
 
-      return true
-    })
-  }, [tasks, filters])
+      return true;
+    });
+  }, [tasks, filters]);
 
   const handleDragStart = (event: DragStartEvent) => {
-    const { active } = event
-    const task = tasks.find((t) => t.id === active.id)
-    if (task) setActiveTask(task)
-  }
+    const { active } = event;
+    const task = tasks.find((t) => t.id === active.id);
+    if (task) setActiveTask(task);
+  };
 
   const handleDragOver = (event: DragOverEvent) => {
-    const { active, over } = event
-    if (!over) return
+    const { active, over } = event;
+    if (!over) return;
 
-    const activeId = active.id as string
-    const overId = over.id as string
+    const activeId = active.id as string;
+    const overId = over.id as string;
 
-    const activeTask = tasks.find((task) => task.id === activeId)
-    if (!activeTask) return
+    const activeTask = tasks.find((task) => task.id === activeId);
+    if (!activeTask) return;
 
     // Check if we're over a column and it's different from current status
-    if (columns.some((col) => col.id === overId) && activeTask.status !== overId) {
+    if (
+      columns.some((col) => col.id === overId) &&
+      activeTask.status !== overId
+    ) {
       setTasks((tasks) =>
         tasks.map((task) =>
           task.id === activeId
@@ -254,26 +223,26 @@ const KanbanBoard = () => {
                 status: overId as "todo" | "in_progress" | "done",
                 priority: task.priority,
               }
-            : task,
-        ),
-      )
+            : task
+        )
+      );
     }
-  }
+  };
 
   const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event
-    setActiveTask(null)
+    const { active, over } = event;
+    setActiveTask(null);
 
-    if (!over) return
+    if (!over) return;
 
-    const activeId = active.id as string
-    const overId = over.id as string
+    const activeId = active.id as string;
+    const overId = over.id as string;
 
     // If dropping on the same item, do nothing
-    if (activeId === overId) return
+    if (activeId === overId) return;
 
-    const activeTask = tasks.find((task) => task.id === activeId)
-    if (!activeTask) return
+    const activeTask = tasks.find((task) => task.id === activeId);
+    if (!activeTask) return;
 
     // Handle dropping on a column
     if (columns.some((col) => col.id === overId)) {
@@ -285,125 +254,78 @@ const KanbanBoard = () => {
                 status: overId as "todo" | "in_progress" | "done",
                 priority: task.priority,
               }
-            : task,
-        ),
-      )
+            : task
+        )
+      );
     }
     // Handle dropping on another task (reorder within column or move to different column)
     else {
-      const overTask = tasks.find((task) => task.id === overId)
+      const overTask = tasks.find((task) => task.id === overId);
       if (overTask) {
         setTasks((prevTasks) => {
-          const activeIndex = prevTasks.findIndex((task) => task.id === activeId)
-          const overIndex = prevTasks.findIndex((task) => task.id === overId)
+          const activeIndex = prevTasks.findIndex(
+            (task) => task.id === activeId
+          );
+          const overIndex = prevTasks.findIndex((task) => task.id === overId);
 
           // If same column, reorder (status stays the same)
           if (activeTask.status === overTask.status) {
-            const newTasks = [...prevTasks]
+            const newTasks = [...prevTasks];
             // Remove the active task
-            const [movedTask] = newTasks.splice(activeIndex, 1)
+            const [movedTask] = newTasks.splice(activeIndex, 1);
             // Insert at the new position
-            newTasks.splice(overIndex, 0, movedTask)
-            return newTasks
+            newTasks.splice(overIndex, 0, movedTask);
+            return newTasks;
           } else {
             // Different column - move to target column and update status
-            const newTasks = [...prevTasks]
+            const newTasks = [...prevTasks];
             const updatedActiveTask = {
               ...activeTask,
               status: overTask.status, // Update status to match target column
-            }
+            };
 
             // Remove from current position
-            newTasks.splice(activeIndex, 1)
+            newTasks.splice(activeIndex, 1);
             // Insert at target position
-            newTasks.splice(overIndex, 0, updatedActiveTask)
-            return newTasks
+            newTasks.splice(overIndex, 0, updatedActiveTask);
+            return newTasks;
           }
-        })
+        });
       }
     }
-  }
-
-  const addDemoTasks = () => {
-    const newTasks: Task[] = [
-      {
-        id: `demo-${Date.now()}-1`,
-        title: "Review code changes",
-        description: "Review and approve pending pull requests",
-        status: "todo",
-        priority: "high",
-        assigneeId: "user-4",
-        dueDate: new Date(new Date().setDate(new Date().getDate() + 3)).toISOString(),
-      },
-      {
-        id: `demo-${Date.now()}-2`,
-        title: "Update documentation",
-        description: "Update API documentation with new endpoints",
-        status: "in_progress",
-        priority: "medium",
-        assigneeId: "user-5",
-        dueDate: new Date(new Date().setDate(new Date().getDate() + 5)).toISOString(),
-      },
-      {
-        id: `demo-${Date.now()}-3`,
-        title: "Security audit",
-        description: "Conduct security audit of the application",
-        status: "todo",
-        priority: "high",
-        assigneeId: "user-6",
-        dueDate: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString(),
-      },
-    ]
-    setTasks((prev) => [...prev, ...newTasks])
-  }
-
-  const handleCreateTask = (taskData: Omit<Task, "id">) => {
-    const newTask: Task = {
-      id: `task-${Date.now()}`,
-      ...taskData,
-    }
-    setTasks((prev) => [...prev, newTask])
-  }
+  };
 
   const handleEditTask = (task: Task) => {
-    setEditingTask(task)
-  }
+    setEditingTask(task);
+  };
 
   const handleDeleteTask = (task: Task) => {
-    setDeletingTask(task)
-  }
+    setDeletingTask(task);
+  };
 
-  const handleUpdateTask = (updatedTask: Omit<Task, "id">) => {
-    if (editingTask) {
-      setTasks((prev) => prev.map((task) => (task.id === editingTask.id ? { ...task, ...updatedTask } : task)))
-      setEditingTask(null)
-    }
-  }
-
+  // Confirm delete handler
   const handleConfirmDelete = () => {
-    if (deletingTask) {
-      setTasks((prev) => prev.filter((task) => task.id !== deletingTask.id))
-      setDeletingTask(null)
-    }
-  }
+    if (!deletingTask) return;
+    deleteTask(deletingTask.id);
+  };
 
   const getTasksByStatus = (status: string) => {
     return filteredTasks
       .filter((task) => task.status === status)
       .sort((a, b) => {
         // Maintain the original order from the tasks array
-        const aIndex = tasks.findIndex((task) => task.id === a.id)
-        const bIndex = tasks.findIndex((task) => task.id === b.id)
-        return aIndex - bIndex
-      })
-  }
+        const aIndex = tasks.findIndex((task) => task.id === a.id);
+        const bIndex = tasks.findIndex((task) => task.id === b.id);
+        return aIndex - bIndex;
+      });
+  };
 
   const handleFilterChange = (filterType: keyof Filters, value: string) => {
     setFilters((prev) => ({
       ...prev,
       [filterType]: value,
-    }))
-  }
+    }));
+  };
 
   const clearFilters = () => {
     setFilters({
@@ -411,14 +333,22 @@ const KanbanBoard = () => {
       assignee: "all-assignees",
       status: "all-status",
       search: "",
-    })
-  }
+    });
+  };
 
   const hasActiveFilters =
     filters.priority !== "all-priorities" ||
     filters.assignee !== "all-assignees" ||
     filters.status !== "all-status" ||
-    filters.search !== ""
+    filters.search !== "";
+
+  if (isLoading) {
+    return <div className="p-6 text-gray-600">Loading tasks...</div>;
+  }
+
+  if (isError) {
+    return <div className="p-6 text-red-600">Failed to load tasks.</div>;
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
@@ -426,7 +356,12 @@ const KanbanBoard = () => {
       <header className="bg-white border-b border-gray-200">
         <div className="flex items-center justify-between h-16 px-6">
           <div className="flex items-center text-blue-500 font-bold text-xl">
-            <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg
+              className="w-6 h-6 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
               <rect width="3" height="3" x="9" y="9" />
               <rect width="3" height="3" x="15" y="9" />
               <rect width="3" height="3" x="9" y="15" />
@@ -479,15 +414,18 @@ const KanbanBoard = () => {
           {/* Dashboard Header */}
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-1">My Dashboard</h1>
-              <p className="text-gray-600">Manage your tasks and projects efficiently</p>
+              <h1 className="text-3xl font-bold text-gray-900 mb-1">
+                My Dashboard
+              </h1>
+              <p className="text-gray-600">
+                Manage your tasks and projects efficiently
+              </p>
             </div>
             <div className="flex gap-3 mt-4 md:mt-0">
-              <Button variant="outline" onClick={addDemoTasks} className="gap-2 bg-transparent">
-                <FileText className="h-4 w-4" />
-                Add Demo Tasks
-              </Button>
-              <Button onClick={() => setIsCreateModalOpen(true)} className="gap-2 bg-blue-500 hover:bg-blue-600">
+              <Button
+                onClick={() => setIsCreateModalOpen(true)}
+                className="gap-2 bg-blue-500 hover:bg-blue-600"
+              >
                 <Plus className="h-4 w-4" />
                 Create Task
               </Button>
@@ -497,9 +435,14 @@ const KanbanBoard = () => {
           {/* Filters */}
           <div className="bg-white border border-gray-200 rounded-lg p-4 mb-6 shadow-sm">
             <div className="flex flex-wrap items-center gap-4">
-              <span className="text-sm font-medium text-gray-700">Filter by:</span>
+              <span className="text-sm font-medium text-gray-700">
+                Filter by:
+              </span>
 
-              <Select value={filters.priority} onValueChange={(value) => handleFilterChange("priority", value)}>
+              <Select
+                value={filters.priority}
+                onValueChange={(value) => handleFilterChange("priority", value)}
+              >
                 <SelectTrigger className="w-[140px]">
                   <SelectValue />
                 </SelectTrigger>
@@ -513,21 +456,27 @@ const KanbanBoard = () => {
                 </SelectContent>
               </Select>
 
-              <Select value={filters.assignee} onValueChange={(value) => handleFilterChange("assignee", value)}>
+              <Select
+                value={filters.assignee}
+                onValueChange={(value) => handleFilterChange("assignee", value)}
+              >
                 <SelectTrigger className="w-[140px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all-assignees">All Assignees</SelectItem>
                   {uniqueAssignees.map((assignee) => (
-                    <SelectItem key={assignee} value={assignee}>
+                    <SelectItem key={assignee} value={assignee as string}>
                       {assignee}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
 
-              <Select value={filters.status} onValueChange={(value) => handleFilterChange("status", value)}>
+              <Select
+                value={filters.status}
+                onValueChange={(value) => handleFilterChange("status", value)}
+              >
                 <SelectTrigger className="w-[120px]">
                   <SelectValue />
                 </SelectTrigger>
@@ -565,7 +514,9 @@ const KanbanBoard = () => {
                   )}
                   {filters.priority !== "all-priorities" && (
                     <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-amber-100 text-amber-800">
-                      Priority: {filters.priority.charAt(0).toUpperCase() + filters.priority.slice(1)}
+                      Priority:{" "}
+                      {filters.priority.charAt(0).toUpperCase() +
+                        filters.priority.slice(1)}
                     </span>
                   )}
                   {filters.assignee !== "all-assignees" && (
@@ -578,7 +529,8 @@ const KanbanBoard = () => {
                       Status:{" "}
                       {filters.status === "in_progress"
                         ? "In Progress"
-                        : filters.status.charAt(0).toUpperCase() + filters.status.slice(1)}
+                        : filters.status.charAt(0).toUpperCase() +
+                          filters.status.slice(1)}
                     </span>
                   )}
                 </div>
@@ -605,30 +557,44 @@ const KanbanBoard = () => {
           >
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {columns.map((column) => {
-                const columnTasks = getTasksByStatus(column.id)
+                const columnTasks = getTasksByStatus(column.id);
                 return (
                   <SortableContext
                     key={column.id}
                     items={columnTasks.map((task) => task.id)}
                     strategy={verticalListSortingStrategy}
                   >
-                    <KanbanColumn id={column.id} title={column.title} count={columnTasks.length}>
+                    <KanbanColumn
+                      id={column.id}
+                      title={column.title}
+                      count={columnTasks.length}
+                    >
                       {columnTasks.map((task) => (
-                        <TaskCard key={task.id} task={task} onEdit={handleEditTask} onDelete={handleDeleteTask} />
+                        <TaskCard
+                          key={task.id}
+                          task={task}
+                          onEdit={handleEditTask}
+                          onDelete={handleDeleteTask}
+                        />
                       ))}
                     </KanbanColumn>
                   </SortableContext>
-                )
+                );
               })}
             </div>
 
             {createPortal(
               <DragOverlay>
                 {activeTask && (
-                  <TaskCard task={activeTask} isDragging onEdit={handleEditTask} onDelete={handleDeleteTask} />
+                  <TaskCard
+                    task={activeTask}
+                    isDragging
+                    onEdit={handleEditTask}
+                    onDelete={handleDeleteTask}
+                  />
                 )}
               </DragOverlay>,
-              document.body,
+              document.body
             )}
           </DndContext>
 
@@ -638,9 +604,12 @@ const KanbanBoard = () => {
               <div className="text-gray-400 mb-4">
                 <Search className="h-12 w-12 mx-auto" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No tasks found</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                No tasks found
+              </h3>
               <p className="text-gray-600 mb-4">
-                No tasks match your current filters. Try adjusting your search criteria.
+                No tasks match your current filters. Try adjusting your search
+                criteria.
               </p>
               <Button onClick={clearFilters} variant="outline">
                 Clear all filters
@@ -654,7 +623,8 @@ const KanbanBoard = () => {
       <CreateTaskModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        onCreateTask={handleCreateTask}
+        onCreateTask={createTask}
+        isSubmitting={isCreatingTask}
       />
 
       {/* Edit Task Modal */}
@@ -664,6 +634,7 @@ const KanbanBoard = () => {
           task={editingTask}
           onClose={() => setEditingTask(null)}
           onUpdateTask={handleUpdateTask}
+          isSubmitting={updateTaskMutation.isPending} // Optional: pass isLoading to disable submit
         />
       )}
 
@@ -677,7 +648,7 @@ const KanbanBoard = () => {
         />
       )}
     </div>
-  )
-}
+  );
+};
 
-export default KanbanBoard
+export default KanbanBoard;
