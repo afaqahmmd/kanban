@@ -7,14 +7,7 @@ import { Input } from "./ui/input"
 import { Textarea } from "./ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 
-interface Task {
-  id: string
-  title: string
-  description: string
-  status: string
-  priority: string
-  assignee: string
-}
+import { Task } from "@/types/index"
 
 interface EditTaskModalProps {
   isOpen: boolean
@@ -28,7 +21,8 @@ interface TaskFormData {
   description: string
   status: string
   priority: string
-  assignee: string
+  assigneeId: string
+  dueDate: string
 }
 
 const EditTaskModal = ({ isOpen, task, onClose, onUpdateTask }: EditTaskModalProps) => {
@@ -44,8 +38,9 @@ const EditTaskModal = ({ isOpen, task, onClose, onUpdateTask }: EditTaskModalPro
       title: task.title,
       description: task.description,
       status: task.status,
-      priority: task.priority === "complete" ? "high" : task.priority,
-      assignee: task.assignee,
+      priority: task.priority,
+      assigneeId: task.assigneeId,
+      dueDate: task.dueDate,
     },
   })
 
@@ -54,7 +49,11 @@ const EditTaskModal = ({ isOpen, task, onClose, onUpdateTask }: EditTaskModalPro
 
   const onSubmit = async (data: TaskFormData) => {
     try {
-      onUpdateTask(data)
+      onUpdateTask({
+        ...data,
+        status: data.status as "todo" | "in_progress" | "done",
+        priority: data.priority as "low" | "medium" | "high",
+      })
       reset()
       onClose()
     } catch (error) {
@@ -116,7 +115,7 @@ const EditTaskModal = ({ isOpen, task, onClose, onUpdateTask }: EditTaskModalPro
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todo">To Do</SelectItem>
-                <SelectItem value="in-progress">In Progress</SelectItem>
+                <SelectItem value="in_progress">In Progress</SelectItem>
                 <SelectItem value="done">Done</SelectItem>
               </SelectContent>
             </Select>
@@ -139,16 +138,16 @@ const EditTaskModal = ({ isOpen, task, onClose, onUpdateTask }: EditTaskModalPro
           </div>
 
           <div>
-            <label htmlFor="assignee" className="block text-sm font-medium text-gray-700 mb-1">
-              Assignee *
+            <label htmlFor="assigneeId" className="block text-sm font-medium text-gray-700 mb-1">
+              Assignee ID *
             </label>
             <Input
-              id="assignee"
-              {...register("assignee", { required: "Assignee is required" })}
-              placeholder="Enter assignee name"
-              className={errors.assignee ? "border-red-500" : ""}
+              id="assigneeId"
+              {...register("assigneeId", { required: "Assignee ID is required" })}
+              placeholder="Enter assignee ID"
+              className={errors.assigneeId ? "border-red-500" : ""}
             />
-            {errors.assignee && <p className="text-red-500 text-xs mt-1">{errors.assignee.message}</p>}
+            {errors.assigneeId && <p className="text-red-500 text-xs mt-1">{errors.assigneeId.message}</p>}
           </div>
 
           <div className="flex gap-3 pt-4">

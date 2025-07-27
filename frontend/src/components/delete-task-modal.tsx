@@ -3,14 +3,7 @@
 import { X, AlertTriangle } from "lucide-react"
 import { Button } from "./ui/button"
 
-interface Task {
-  id: string
-  title: string
-  description: string
-  status: string
-  priority: string
-  assignee: string
-}
+import { Task } from "@/types/index"
 
 interface DeleteTaskModalProps {
   isOpen: boolean
@@ -49,9 +42,10 @@ const DeleteTaskModal = ({ isOpen, task, onClose, onConfirm }: DeleteTaskModalPr
             <h4 className="font-medium text-gray-900 mb-1">{task.title}</h4>
             <p className="text-sm text-gray-600 mb-2">{task.description}</p>
             <div className="flex items-center gap-4 text-xs text-gray-500">
-              <span>Assignee: {task.assignee}</span>
+              <span>Assignee: {task.assigneeId}</span>
               <span>Priority: {task.priority}</span>
               <span>Status: {task.status}</span>
+              <span>Due: {new Date(task.dueDate).toLocaleDateString()}</span>
             </div>
           </div>
 

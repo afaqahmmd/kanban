@@ -2,8 +2,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { authApi } from "@/api/auth";
 import { signupSchema, type SignupInput } from "@/lib/validations/auth";
@@ -96,7 +96,7 @@ export default function SignUp() {
                         type="password" 
                         placeholder="Password" 
                         disabled={signupMutation.isPending}
-                        {...field} 
+                        {...field}
                       />
                     </FormControl>
                     <FormMessage />

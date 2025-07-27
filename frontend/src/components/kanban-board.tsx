@@ -25,37 +25,21 @@ import TaskCard from "./task-card"
 import CreateTaskModal from "./create-task-modal"
 import EditTaskModal from "./edit-task-modal"
 import DeleteTaskModal from "./delete-task-modal"
+import { Task, Column, Filters } from "@/types/index"
 
-interface Task {
-  id: string
-  title: string
-  description: string
-  status: string
-  priority: string
-  assignee: string
-}
 
-interface Column {
-  id: string
-  title: string
-}
-
-interface Filters {
-  priority: string
-  assignee: string
-  status: string
-  search: string
-}
 
 const KanbanBoard = () => {
-  const [tasks, setTasks] = useState<Task[]>([
+  const [tasks, setTasks] = useState<Task[]>(
+    [
     {
       id: "1",
       title: "Set up authentication system",
       description: "Implement user login and registration functionality",
       status: "todo",
       priority: "medium",
-      assignee: "John Doe",
+      assigneeId: "user-1",
+      dueDate: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString(),
     },
     {
       id: "2",
@@ -63,39 +47,44 @@ const KanbanBoard = () => {
       description: "Create wireframes and visual design for the new landing page",
       status: "todo",
       priority: "high",
-      assignee: "Jane Smith",
+      assigneeId: "user-2",
+      dueDate: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString(),
     },
     {
       id: "3",
       title: "Implement drag and drop",
       description: "Add drag and drop functionality to kanban board",
-      status: "in-progress",
+      status: "in_progress",
       priority: "medium",
-      assignee: "Mike Johnson",
+      assigneeId: "user-3",
+      dueDate: new Date(new Date().setDate(new Date().getDate() + 5)).toISOString(),
     },
     {
       id: "4",
-      title: "Build task management API",
-      description: "Create REST endpoints for CRUD operations on tasks",
-      status: "in-progress",
+      title: "API integration",
+      description: "Connect frontend with backend API endpoints",
+      status: "in_progress",
       priority: "high",
-      assignee: "Sarah Wilson",
+      assigneeId: "user-1",
+      dueDate: new Date(new Date().setDate(new Date().getDate() + 3)).toISOString(),
     },
     {
       id: "5",
-      title: "Deploy to production",
-      description: "Set up production environment and deploy application",
+      title: "User testing",
+      description: "Conduct user testing sessions and gather feedback",
       status: "done",
-      priority: "complete",
-      assignee: "John Doe",
+      priority: "medium",
+      assigneeId: "user-2",
+      dueDate: new Date(new Date().setDate(new Date().getDate() + 10)).toISOString(),
     },
     {
       id: "6",
-      title: "Write project documentation",
-      description: "Create comprehensive documentation for the project",
+      title: "Bug fixes",
+      description: "Address reported issues and bugs",
       status: "done",
-      priority: "complete",
-      assignee: "Jane Smith",
+      priority: "high",
+      assigneeId: "user-3",
+      dueDate: new Date(new Date().setDate(new Date().getDate() + 2)).toISOString(),
     },
     {
       id: "7",
@@ -103,17 +92,74 @@ const KanbanBoard = () => {
       description: "Establish code review guidelines and process",
       status: "todo",
       priority: "low",
-      assignee: "Mike Johnson",
+      assigneeId: "user-1",
+      dueDate: new Date(new Date().setDate(new Date().getDate() + 8)).toISOString(),
     },
     {
       id: "8",
+      title: "Documentation",
+      description: "Write technical documentation and API references",
+      status: "in_progress",
+      priority: "low",
+      assigneeId: "user-2",
+      dueDate: new Date(new Date().setDate(new Date().getDate() + 6)).toISOString(),
+    },
+    {
+      id: "9",
+      title: "Implement drag and drop",
+      description: "Add drag and drop functionality to kanban board",
+      status: "in_progress",
+      priority: "medium",
+      assigneeId: "user-3",
+      dueDate: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString(),
+    },
+    {
+      id: "10",
+      title: "Build task management API",
+      description: "Create REST endpoints for CRUD operations on tasks",
+      status: "in_progress",
+      priority: "high",
+      assigneeId: "user-4",
+      dueDate: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString(),
+    },
+    {
+      id: "11",
+      title: "Deploy to production",
+      description: "Set up production environment and deploy application",
+      status: "done",
+      priority: "medium",
+      assigneeId: "user-5",
+      dueDate: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString(),
+    },
+    {
+      id: "12",
+      title: "Write project documentation",
+      description: "Create comprehensive documentation for the project",
+      status: "done",
+      priority: "low",
+      assigneeId: "user-6",
+      dueDate: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString(),
+    },
+    {
+      id: "13",
+      title: "Code review process",
+      description: "Establish code review guidelines and process",
+      status: "todo",
+      priority: "low",
+      assigneeId: "user-1",
+      dueDate: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString(),
+    },
+    {
+      id: "14",
       title: "Database optimization",
       description: "Optimize database queries for better performance",
-      status: "in-progress",
+      status: "in_progress",
       priority: "high",
-      assignee: "Sarah Wilson",
+      assigneeId: "user-2",
+      dueDate: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString(),
     },
-  ])
+  ]
+)
 
   const [activeTask, setActiveTask] = useState<Task | null>(null)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
@@ -129,7 +175,7 @@ const KanbanBoard = () => {
 
   const columns: Column[] = [
     { id: "todo", title: "To Do" },
-    { id: "in-progress", title: "In Progress" },
+    { id: "in_progress", title: "In Progress" },
     { id: "done", title: "Done" },
   ]
 
@@ -141,12 +187,12 @@ const KanbanBoard = () => {
 
   // Get unique assignees and priorities from tasks
   const uniqueAssignees = useMemo(() => {
-    const assignees = [...new Set(tasks.map((task) => task.assignee))].sort()
+    const assignees = [...new Set(tasks.map((task) => task.assigneeId))].sort()
     return assignees
   }, [tasks])
 
   const uniquePriorities = useMemo(() => {
-    const priorities = [...new Set(tasks.map((task) => task.priority))].filter((p) => p !== "complete")
+    const priorities = [...new Set(tasks.map((task) => task.priority))]
     return priorities.sort()
   }, [tasks])
 
@@ -158,8 +204,8 @@ const KanbanBoard = () => {
         const searchLower = filters.search.toLowerCase()
         const matchesSearch =
           task.title.toLowerCase().includes(searchLower) ||
-          task.description.toLowerCase().includes(searchLower) ||
-          task.assignee.toLowerCase().includes(searchLower)
+          (task.description?.toLowerCase() || '').includes(searchLower) ||
+          task.assigneeId.toLowerCase().includes(searchLower)
         if (!matchesSearch) return false
       }
 
@@ -169,7 +215,7 @@ const KanbanBoard = () => {
       }
 
       // Assignee filter
-      if (filters.assignee !== "all-assignees" && task.assignee !== filters.assignee) {
+      if (filters.assignee !== "all-assignees" && task.assigneeId !== filters.assignee) {
         return false
       }
 
@@ -205,8 +251,8 @@ const KanbanBoard = () => {
           task.id === activeId
             ? {
                 ...task,
-                status: overId,
-                priority: overId === "done" ? "complete" : task.priority === "complete" ? "high" : task.priority,
+                status: overId as "todo" | "in_progress" | "done",
+                priority: task.priority,
               }
             : task,
         ),
@@ -236,8 +282,8 @@ const KanbanBoard = () => {
           task.id === activeId
             ? {
                 ...task,
-                status: overId, // Update status to match the column
-                priority: overId === "done" ? "complete" : task.priority === "complete" ? "high" : task.priority,
+                status: overId as "todo" | "in_progress" | "done",
+                priority: task.priority,
               }
             : task,
         ),
@@ -265,12 +311,6 @@ const KanbanBoard = () => {
             const updatedActiveTask = {
               ...activeTask,
               status: overTask.status, // Update status to match target column
-              priority:
-                overTask.status === "done"
-                  ? "complete"
-                  : activeTask.priority === "complete"
-                    ? "high"
-                    : activeTask.priority,
             }
 
             // Remove from current position
@@ -292,15 +332,17 @@ const KanbanBoard = () => {
         description: "Review and approve pending pull requests",
         status: "todo",
         priority: "high",
-        assignee: "Alex Brown",
+        assigneeId: "user-4",
+        dueDate: new Date(new Date().setDate(new Date().getDate() + 3)).toISOString(),
       },
       {
         id: `demo-${Date.now()}-2`,
         title: "Update documentation",
         description: "Update API documentation with new endpoints",
-        status: "in-progress",
+        status: "in_progress",
         priority: "medium",
-        assignee: "Emma Davis",
+        assigneeId: "user-5",
+        dueDate: new Date(new Date().setDate(new Date().getDate() + 5)).toISOString(),
       },
       {
         id: `demo-${Date.now()}-3`,
@@ -308,7 +350,8 @@ const KanbanBoard = () => {
         description: "Conduct security audit of the application",
         status: "todo",
         priority: "high",
-        assignee: "Tom Wilson",
+        assigneeId: "user-6",
+        dueDate: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString(),
       },
     ]
     setTasks((prev) => [...prev, ...newTasks])
@@ -491,7 +534,7 @@ const KanbanBoard = () => {
                 <SelectContent>
                   <SelectItem value="all-status">All Status</SelectItem>
                   <SelectItem value="todo">To Do</SelectItem>
-                  <SelectItem value="in-progress">In Progress</SelectItem>
+                  <SelectItem value="in_progress">In Progress</SelectItem>
                   <SelectItem value="done">Done</SelectItem>
                 </SelectContent>
               </Select>
@@ -533,7 +576,7 @@ const KanbanBoard = () => {
                   {filters.status !== "all-status" && (
                     <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-800">
                       Status:{" "}
-                      {filters.status === "in-progress"
+                      {filters.status === "in_progress"
                         ? "In Progress"
                         : filters.status.charAt(0).toUpperCase() + filters.status.slice(1)}
                     </span>

@@ -7,14 +7,7 @@ import { Input } from "./ui/input"
 import { Textarea } from "./ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 
-interface Task {
-  id: string
-  title: string
-  description: string
-  status: string
-  priority: string
-  assignee: string
-}
+import { Task } from "@/types/index"
 
 interface CreateTaskModalProps {
   isOpen: boolean
@@ -27,7 +20,8 @@ interface TaskFormData {
   description: string
   status: string
   priority: string
-  assignee: string
+  assigneeId: string
+  dueDate: string
 }
 
 const CreateTaskModal = ({ isOpen, onClose, onCreateTask }: CreateTaskModalProps) => {
@@ -44,7 +38,8 @@ const CreateTaskModal = ({ isOpen, onClose, onCreateTask }: CreateTaskModalProps
       description: "",
       status: "todo",
       priority: "medium",
-      assignee: "",
+      assigneeId: "",
+      dueDate: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString(),
     },
   })
 
@@ -53,7 +48,11 @@ const CreateTaskModal = ({ isOpen, onClose, onCreateTask }: CreateTaskModalProps
 
   const onSubmit = async (data: TaskFormData) => {
     try {
-      onCreateTask(data)
+      onCreateTask({
+        ...data,
+        status: data.status as "todo" | "in_progress" | "done",
+        priority: data.priority as "low" | "medium" | "high",
+      })
       reset()
       onClose()
     } catch (error) {
@@ -115,7 +114,7 @@ const CreateTaskModal = ({ isOpen, onClose, onCreateTask }: CreateTaskModalProps
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todo">To Do</SelectItem>
-                <SelectItem value="in-progress">In Progress</SelectItem>
+                <SelectItem value="in_progress">In Progress</SelectItem>
                 <SelectItem value="done">Done</SelectItem>
               </SelectContent>
             </Select>
@@ -138,16 +137,16 @@ const CreateTaskModal = ({ isOpen, onClose, onCreateTask }: CreateTaskModalProps
           </div>
 
           <div>
-            <label htmlFor="assignee" className="block text-sm font-medium text-gray-700 mb-1">
-              Assignee *
+            <label htmlFor="assigneeId" className="block text-sm font-medium text-gray-700 mb-1">
+              Assignee ID *
             </label>
             <Input
-              id="assignee"
-              {...register("assignee", { required: "Assignee is required" })}
-              placeholder="Enter assignee name"
-              className={errors.assignee ? "border-red-500" : ""}
+              id="assigneeId"
+              {...register("assigneeId", { required: "Assignee ID is required" })}
+              placeholder="Enter assignee ID"
+              className={errors.assigneeId ? "border-red-500" : ""}
             />
-            {errors.assignee && <p className="text-red-500 text-xs mt-1">{errors.assignee.message}</p>}
+            {errors.assigneeId && <p className="text-red-500 text-xs mt-1">{errors.assigneeId.message}</p>}
           </div>
 
           <div className="flex gap-3 pt-4">

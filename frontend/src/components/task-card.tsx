@@ -6,14 +6,7 @@ import { CSS } from "@dnd-kit/utilities"
 import { Button } from "./ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu"
 
-interface Task {
-  id: string
-  title: string
-  description: string
-  status: string
-  priority: string
-  assignee: string
-}
+import { Task } from "@/types/index"
 
 interface TaskCardProps {
   task: Task
@@ -81,13 +74,9 @@ const TaskCard = ({ task, isDragging = false, onEdit, onDelete }: TaskCardProps)
       <p className="text-sm text-gray-600 mb-4">{task.description}</p>
       <div className="flex items-center text-xs text-gray-500">
         <div className="h-5 w-5 mr-2 bg-gray-100 rounded-full flex items-center justify-center text-xs font-medium">
-          {task.assignee
-            .split(" ")
-            .map((n) => n[0])
-            .join("")
-            .toUpperCase()}
+          {task.assigneeId.toUpperCase()}
         </div>
-        <span>{task.assignee}</span>
+        <span>{task.assigneeId}</span>
       </div>
     </div>
   )
