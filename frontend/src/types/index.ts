@@ -1,21 +1,30 @@
-export type TaskPriority = "low" | "medium" | "high"
-export type TaskStatus = "todo" | "in_progress" | "done"
+export type TaskPriority = "low" | "medium" | "high";
+export type TaskStatus = "todo" | "in_progress" | "done";
+
+type Assignee = {
+  id: string;
+  full_name: string;
+  email: string;
+};
 
 export interface Task {
   id: string;
   title: string;
   description?: string;
-  status: TaskStatus;
-  priority: TaskPriority;
+  status: "todo" | "in_progress" | "done";
+  priority: "low" | "medium" | "high";
   assigneeId: string;
-  dueDate: string;
-  attachmentUrl?: string;
-}
-export interface Column {
-  id: string
-  title: string
+  assignee?: Assignee | null; // Optional, can be null if no assignee
+  due_date: string; // ISO string from DateTime
+  attachment_url?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
+export interface Column {
+  id: string;
+  title: string;
+}
 
 export interface User {
   id: string;
@@ -39,10 +48,28 @@ export interface SignupCredentials {
   password: string;
 }
 
-
 export interface Filters {
   priority: "all-priorities" | TaskPriority;
   assignee: string;
   status: "all-status" | TaskStatus;
   search: string;
+}
+
+
+export type CreateTaskPayload = {
+  title: string;
+  description?: string;
+  status: "todo" | "in_progress" | "done";
+  priority: "low" | "medium" | "high";
+  assigneeId: string;
+  due_date: string;
+};
+
+export interface UpdateTaskPayload {
+  title: string;
+  description?: string;
+  status: "todo" | "in_progress" | "done";
+  priority: "low" | "medium" | "high";
+  assigneeId: string;
+  due_date?: string;
 }

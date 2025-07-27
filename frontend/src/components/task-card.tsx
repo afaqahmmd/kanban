@@ -74,9 +74,9 @@ const TaskCard = ({ task, isDragging = false, onEdit, onDelete }: TaskCardProps)
       <p className="text-sm text-gray-600 mb-4">{task.description}</p>
       <div className="flex items-center text-xs text-gray-500">
         <div className="h-5 w-5 mr-2 bg-gray-100 rounded-full flex items-center justify-center text-xs font-medium">
-          {task.assigneeId.toUpperCase()}
+          {task.assignee?.full_name.slice(0, 2).toUpperCase()}
         </div>
-        <span>{task.assigneeId}</span>
+        <span>{task.assignee?.full_name}</span>
       </div>
     </div>
   )

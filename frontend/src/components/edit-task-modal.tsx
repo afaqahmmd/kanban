@@ -1,19 +1,31 @@
 "use client"
 
-import { useForm } from "react-hook-form"
+import { useForm,Controller } from "react-hook-form"
 import { X } from "lucide-react"
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
 import { Textarea } from "./ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
+import { Task, User } from "@/types/index"
+import { useQuery } from "@tanstack/react-query"
+import { fetchUsers } from "@/api/tasks"
 
-import { Task } from "@/types/index"
+type UpdateTaskInput = {
+  title: string;
+  description?: string;
+  status: "todo" | "in_progress" | "done";
+  priority: "low" | "medium" | "high";
+  assigneeId: string;
+  due_date?: string;
+};
+
 
 interface EditTaskModalProps {
-  isOpen: boolean
-  task: Task
-  onClose: () => void
-  onUpdateTask: (task: Omit<Task, "id">) => void
+  isOpen: boolean;
+  task: Task;
+  onClose: () => void;
+  onUpdateTask: (task: UpdateTaskInput) => void;
+  isSubmitting?: boolean;
 }
 
 interface TaskFormData {
@@ -22,7 +34,7 @@ interface TaskFormData {
   status: string
   priority: string
   assigneeId: string
-  dueDate: string
+  due_date: string
 }
 
 const EditTaskModal = ({ isOpen, task, onClose, onUpdateTask }: EditTaskModalProps) => {
@@ -30,6 +42,7 @@ const EditTaskModal = ({ isOpen, task, onClose, onUpdateTask }: EditTaskModalPro
     register,
     handleSubmit,
     reset,
+    control,
     setValue,
     watch,
     formState: { errors, isSubmitting },
@@ -40,9 +53,20 @@ const EditTaskModal = ({ isOpen, task, onClose, onUpdateTask }: EditTaskModalPro
       status: task.status,
       priority: task.priority,
       assigneeId: task.assigneeId,
-      dueDate: task.dueDate,
+      due_date: task.due_date,
     },
   })
+
+
+    const {
+    data: users = [],
+    isLoading: isUsersLoading,
+    isError: isUsersError,
+  } = useQuery<User[]>({
+    queryKey: ["users"],
+    queryFn: fetchUsers,
+  });
+
 
   const watchedStatus = watch("status")
   const watchedPriority = watch("priority")
@@ -137,18 +161,48 @@ const EditTaskModal = ({ isOpen, task, onClose, onUpdateTask }: EditTaskModalPro
             </Select>
           </div>
 
-          <div>
-            <label htmlFor="assigneeId" className="block text-sm font-medium text-gray-700 mb-1">
-              Assignee ID *
-            </label>
-            <Input
-              id="assigneeId"
-              {...register("assigneeId", { required: "Assignee ID is required" })}
-              placeholder="Enter assignee ID"
-              className={errors.assigneeId ? "border-red-500" : ""}
-            />
-            {errors.assigneeId && <p className="text-red-500 text-xs mt-1">{errors.assigneeId.message}</p>}
-          </div>
+          {isUsersLoading ? (
+            <p className="text-sm text-gray-500 mt-1">Loading users...</p>
+          ) : (
+            <div>
+              <label
+                htmlFor="assigneeId"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Assignee *
+              </label>
+
+              <Controller
+                name="assigneeId"
+                control={control}
+                rules={{ required: "Assignee is required" }}
+                render={({ field }) => (
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger>
+                      <SelectValue
+                        placeholder={
+                          isUsersLoading ? "Loading..." : "Select user"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {users.map((user) => (
+                        <SelectItem key={user.id} value={user.id}>
+                          {user.full_name} ({user.email})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+
+              {errors.assigneeId && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.assigneeId.message}
+                </p>
+              )}
+            </div>
+          )}
 
           <div className="flex gap-3 pt-4">
             <Button type="button" variant="outline" onClick={handleClose} className="flex-1 bg-transparent">

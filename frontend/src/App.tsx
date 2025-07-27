@@ -3,7 +3,6 @@ import {
   Routes,
   Route,
   Navigate,
-  useNavigate,
 } from "react-router-dom";
 import KanbanBoard from "./components/kanban-board";
 import Login from "./pages/login";
