@@ -1,7 +1,7 @@
 {
   "name": "my-v0-project",
   "version": "0.1.0",
-  "type": "module",          
+  "type": "module",
   "private": true,
   "scripts": {
     "dev": "vite",
@@ -57,8 +57,9 @@
     "react": "^19",
     "react-day-picker": "9.8.0",
     "react-dom": "^19",
-    "react-hook-form": "latest",
+    "react-hook-form": "^7.61.1",
     "react-resizable-panels": "^2.1.7",
+    "react-router-dom": "^7.7.1",
     "recharts": "2.15.0",
     "sass": "latest",
     "sass-embedded": "latest",
@@ -72,7 +73,7 @@
     "vaul": "1.1.2",
     "vite": "latest",
     "yaml": "latest",
-    "zod": "^3.24.1"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/node": "^22",
