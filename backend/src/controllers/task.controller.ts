@@ -25,7 +25,18 @@ export const createTask = async (req: Request, res: Response) => {
   if (new Date(due_date) <= new Date()) {
     return res.status(400).json({ error: "Due date must be in future" });
   }
+  // Validate assigneeId if provided
+  if (assigneeId) {
+    const userExists = await prisma.user.findUnique({
+      where: { id: assigneeId },
+    });
 
+    if (!userExists) {
+      return res.status(400).json({
+        error: "User does not exist or invalid user ID",
+      });
+    }
+  }
   const task = await prisma.task.create({
     data: {
       title,
@@ -39,11 +50,11 @@ export const createTask = async (req: Request, res: Response) => {
   res.status(201).json(task);
 };
 
-
 //PUT /api/tasks/:id
 export const updateTask = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { title, description, status, priority, assigneeId, due_date } = req.body;
+  const { title, description, status, priority, assigneeId, due_date } =
+    req.body;
 
   const task = await prisma.task.update({
     where: { id },
