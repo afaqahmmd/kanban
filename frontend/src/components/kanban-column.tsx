@@ -15,7 +15,7 @@ const KanbanColumn = ({ id, title, count, children }: KanbanColumnProps) => {
     switch (status) {
       case "todo":
         return <div className="w-2 h-2 rounded-full bg-gray-400" />
-      case "in-progress":
+      case "in_progress":
         return <div className="w-2 h-2 rounded-full bg-amber-400" />
       case "done":
         return <div className="w-2 h-2 rounded-full bg-green-500" />
@@ -28,7 +28,7 @@ const KanbanColumn = ({ id, title, count, children }: KanbanColumnProps) => {
     switch (status) {
       case "todo":
         return "text-gray-500"
-      case "in-progress":
+      case "in_progress":
         return "text-amber-500"
       case "done":
         return "text-green-500"
