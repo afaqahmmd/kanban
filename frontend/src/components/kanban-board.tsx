@@ -328,8 +328,8 @@ const KanbanBoard = () => {
     return filteredTasks
       .filter((task) => task.status === status)
       .sort((a, b) => {
-        // Maintain the original order from the tasks array
-        const aIndex = tasks.findIndex((task) => task.id === a.id);
+
+          const aIndex = tasks.findIndex((task) => task.id === a.id);
         const bIndex = tasks.findIndex((task) => task.id === b.id);
         return aIndex - bIndex;
       });
