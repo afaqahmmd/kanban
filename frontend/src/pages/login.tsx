@@ -5,10 +5,18 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useDispatch } from "react-redux";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
 import { authApi } from "@/api/auth";
 import { loginSchema, type LoginInput } from "@/lib/validations/auth";
-import { authSuccess } from "@/redux/slices/userSlice";
+import { authSuccess, setCurrentUser } from "@/redux/slices/userSlice";
 import {
   Form,
   FormControl,
@@ -32,12 +40,16 @@ export default function Login() {
   const loginMutation = useMutation({
     mutationFn: authApi.login,
     onSuccess: (data) => {
-      dispatch(authSuccess({
-        user: data.user,
-        token: data.token
-      }));
+      dispatch(
+        authSuccess({
+          user: data.user,
+          token: data.token,
+        })
+      );
       toast.success("Login successful!");
-      navigate("/");
+      setTimeout(() => {
+        navigate("/");
+      }, 1000);
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.error || "Login failed");
@@ -57,18 +69,21 @@ export default function Login() {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleLogin)} className="space-y-4">
+            <form
+              onSubmit={form.handleSubmit(handleLogin)}
+              className="space-y-4"
+            >
               <FormField
                 control={form.control}
                 name="email"
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
-                      <Input 
-                        type="email" 
-                        placeholder="Email" 
-                        disabled={loginMutation.isPending} 
-                        {...field} 
+                      <Input
+                        type="email"
+                        placeholder="Email"
+                        disabled={loginMutation.isPending}
+                        {...field}
                       />
                     </FormControl>
                     <FormMessage />
@@ -81,19 +96,19 @@ export default function Login() {
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
-                      <Input 
-                        type="password" 
-                        placeholder="Password" 
-                        disabled={loginMutation.isPending} 
-                        {...field} 
+                      <Input
+                        type="password"
+                        placeholder="Password"
+                        disabled={loginMutation.isPending}
+                        {...field}
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 className="w-full"
                 disabled={loginMutation.isPending}
               >

@@ -8,21 +8,25 @@ import KanbanBoard from "./components/kanban-board";
 import Login from "./pages/login";
 import SignUp from "./pages/signup";
 import "./globals.css";
+import ProtectedRoute from "./ProtectedRoute";
+
 
 function App() {
-  const isAuthenticated = !!localStorage.getItem("token");
 
   return (
     <BrowserRouter>
       <Routes>
+       <Route path="/login" element={<Login />} />
+       <Route path="/signup" element={<SignUp />} />
+        
         <Route
           path="/"
           element={
-            isAuthenticated ? <KanbanBoard /> : <Navigate to="/login" replace />
+            <ProtectedRoute>
+              <KanbanBoard />
+            </ProtectedRoute>
           }
         />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<SignUp />} />
       </Routes>
     </BrowserRouter>
   );

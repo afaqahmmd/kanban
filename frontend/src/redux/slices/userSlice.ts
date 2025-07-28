@@ -25,6 +25,9 @@ const userSlice = createSlice({
     setUsers: (state, action: PayloadAction<User[]>) => {
       state.users = action.payload;
     },
+    setCurrentUser: (state, action: PayloadAction<User | null>) => {
+      state.currentUser = action.payload;
+    },
     addUser: (state, action: PayloadAction<User>) => {
       state.users.push(action.payload);
     },
@@ -47,6 +50,6 @@ const userSlice = createSlice({
   },
 });
 
-export const { setUsers, addUser, authSuccess, logout } = userSlice.actions;
+export const { setUsers,setCurrentUser, addUser, authSuccess, logout } = userSlice.actions;
 
 export default userSlice.reducer;

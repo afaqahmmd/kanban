@@ -40,10 +40,14 @@ import TaskCard from "./task-card";
 import CreateTaskModal from "./create-task-modal";
 import EditTaskModal from "./edit-task-modal";
 import DeleteTaskModal from "./delete-task-modal";
+import { logout } from "@/redux/slices/userSlice";
 import { Task, Column, Filters, UpdateTaskPayload } from "@/types/index";
 import { useQuery } from "@tanstack/react-query";
 import { getTasks } from "@/api/tasks";
 import { toast } from "sonner";
+import { useDispatch,useSelector} from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { RootState } from '../redux/store';
 
 type UpdateTaskInput = {
   title: string;
@@ -57,6 +61,15 @@ type UpdateTaskInput = {
 const KanbanBoard = () => {
   const queryClient = useQueryClient();
   const [tasks, setTasks] = useState<Task[]>([]);
+  const navigate = useNavigate()
+  const dispatch = useDispatch();
+   const currentUser = useSelector((state: RootState) => state.users.currentUser);
+
+  // Current logged in User
+
+   useEffect(() => {
+    console.log('Current User:', currentUser);
+  }, [currentUser]);
 
   // GET tasks list
   const {
@@ -350,6 +363,14 @@ const KanbanBoard = () => {
     return <div className="p-6 text-red-600">Failed to load tasks.</div>;
   }
 
+  const handleLogout = () => {
+    dispatch(logout());
+    queryClient.clear();
+    setTasks([]);
+    navigate("/login");
+    toast.success("Logged out successfully");
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       {/* Header */}
@@ -384,24 +405,18 @@ const KanbanBoard = () => {
           </div>
 
           <div className="flex items-center gap-6">
-            <div className="relative">
-              <Bell className="h-5 w-5 text-gray-600" />
-              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-medium text-white">
-                2
-              </span>
-            </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="gap-2">
-                  <span className="font-semibold text-gray-900">AA</span>
-                  <span className="text-gray-600">afaq ahmed</span>
+                  <span className="font-semibold text-gray-900">{currentUser?.full_name.slice(0, 2).toUpperCase()}</span>
+                  <span className="text-gray-600 hidden md:block">{currentUser?.full_name}</span>
                   <ChevronDown className="h-4 w-4 text-gray-400" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem>Profile</DropdownMenuItem>
                 <DropdownMenuItem>Settings</DropdownMenuItem>
-                <DropdownMenuItem>Logout</DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
