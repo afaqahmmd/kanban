@@ -45,9 +45,9 @@ import { Task, Column, Filters, UpdateTaskPayload } from "@/types/index";
 import { useQuery } from "@tanstack/react-query";
 import { getTasks } from "@/api/tasks";
 import { toast } from "sonner";
-import { useDispatch,useSelector} from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { RootState } from '../redux/store';
+import { RootState } from "../redux/store";
 
 type UpdateTaskInput = {
   title: string;
@@ -61,14 +61,16 @@ type UpdateTaskInput = {
 const KanbanBoard = () => {
   const queryClient = useQueryClient();
   const [tasks, setTasks] = useState<Task[]>([]);
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   const dispatch = useDispatch();
-   const currentUser = useSelector((state: RootState) => state.users.currentUser);
+  const currentUser = useSelector(
+    (state: RootState) => state.users.currentUser
+  );
 
   // Current logged in User
 
-   useEffect(() => {
-    console.log('Current User:', currentUser);
+  useEffect(() => {
+    console.log("Current User:", currentUser);
   }, [currentUser]);
 
   // GET tasks list
@@ -369,7 +371,7 @@ const KanbanBoard = () => {
     setTasks([]);
     navigate("/login");
     toast.success("Logged out successfully");
-  }
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
@@ -408,15 +410,25 @@ const KanbanBoard = () => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="gap-2">
-                  <span className="font-semibold text-gray-900">{currentUser?.full_name.slice(0, 2).toUpperCase()}</span>
-                  <span className="text-gray-600 hidden md:block">{currentUser?.full_name}</span>
-                  <ChevronDown className="h-4 w-4 text-gray-400" />
+                  {currentUser && currentUser.full_name.length>0 && (
+                    <>
+                      <span className="font-semibold text-gray-900">
+                        {currentUser?.full_name.slice(0, 2).toUpperCase()}
+                      </span>
+                      <span className="text-gray-600 hidden md:block">
+                        {currentUser?.full_name}
+                      </span>
+                      <ChevronDown className="h-4 w-4 text-gray-400" />
+                    </>
+                  )}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem>Profile</DropdownMenuItem>
                 <DropdownMenuItem>Settings</DropdownMenuItem>
-                <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLogout}>
+                  Logout
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
